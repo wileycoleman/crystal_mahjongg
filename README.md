@@ -30,7 +30,7 @@ Icons are mostly self explanatory but here is a simple reference.
 ![alt text](src/support/icons/bulb_off.png) Hint - get a possible move
 
 
-### The Following feature are only on Linux
+### The following feature are only on Linux
 
 ![alt text](src/support/icons/settings.png)  Changes to Linux only Settings page
 
