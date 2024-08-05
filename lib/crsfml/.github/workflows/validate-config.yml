@@ -1,0 +1,20 @@
+name: Validate CI config
+on:
+  push:
+    paths: ['.github/**']
+  pull_request:
+    paths: ['.github/**']
+    branches: [master]
+jobs:
+  build:
+    name: Validate CI config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Crystal
+        uses: oprypin/install-crystal@v1
+      - name: Download sources
+        uses: actions/checkout@v3
+      - name: Generate config
+        run: crystal run .github/workflows/generate.cr
+      - name: Validate freshness
+        run: git diff --exit-code

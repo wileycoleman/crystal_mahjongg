@@ -1,0 +1,14 @@
+name: crystal_mahjongg
+version: 0.1.0
+
+dependencies:
+  crsfml:
+    github: oprypin/crsfml
+    version: ~> 2.5.2
+  baked_file_system:
+    github: schovi/baked_file_system
+    version: 0.10.0
+
+crystal: '>= 1.11.2'
+
+license: MIT

@@ -1,0 +1,12 @@
+lib/
+/bin/
+/.shards/
+/.crystal/
+_*.cr
+*.o
+*.obj
+*.so
+*.lib
+/api
+/SFML
+/generate

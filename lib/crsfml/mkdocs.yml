@@ -1,0 +1,53 @@
+site_name: CrSFML
+site_url: https://oprypin.github.io/crsfml/
+repo_url: https://github.com/oprypin/crsfml
+edit_uri: blob/master/docs/
+use_directory_urls: false
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+  logo: icon.png
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    primary: teal
+    accent: green
+
+extra_css:
+  - style.css
+
+watch:
+  - src
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.magiclink
+  - pymdownx.saneheaders
+  - pymdownx.superfences
+  - pymdownx.snippets
+  - deduplicate-toc
+  - callouts
+  - toc:
+      permalink: "#"
+
+plugins:
+  - search
+  - gen-files:
+      scripts:
+        - tools/gen_doc_files.py
+  - mkdocstrings:
+      default_handler: crystal
+      handlers:
+        crystal:
+          crystal_docs_flags: [--source-refname=master]
+  - literate-nav:
+      nav_file: README.md
+  - section-index
+  - code-validator:
+      enabled: !ENV [LINT, false]
+      identifiers:
+        crystal:
+          validators:
+            - crystal tool format --check -

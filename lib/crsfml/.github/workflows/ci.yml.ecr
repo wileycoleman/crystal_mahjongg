@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  <% %w[push pull_request].each do |ev| %>
+  <%= ev %>:
+    paths-ignore: ['docs/**', '*.md']
+  <% end %>
+    branches: [master]
+  schedule:
+    - cron: '0 6 * * 6'
+
+<% ubuntu, mac, windows = "Ubuntu", "macOS", "Windows" %>
+<% latest_sfml = "2.5.1" %>
+<% homebrew = "Homebrew" %>
+<% config = {os_ver: nil, sfml: latest_sfml, crystal: "latest", docker: nil, sfml_pkg: false} %>
+<% matrix = [
+  config.merge(os: ubuntu, os_ver: "22.04", crystal: "nightly"),
+  config.merge(docker: "crystallang/crystal:0.28.0", os: ubuntu, os_ver: "16.04", sfml_pkg: true, sfml: "2.3.2", crystal: "0.28.0"),
+  config.merge(os: mac),
+  config.merge(os: mac, sfml: homebrew, crystal: homebrew, sfml_pkg: true),
+  config.merge(os: windows, crystal: "nightly"),
+] %>
+<% all = {ubuntu, mac, windows} %>
+<% examples = {
+  "simple" => all,
+  "flippy_bird" => all,
+  "snakes" => {ubuntu, windows},
+  "transformable" => all,
+  "text_input" => all,
+  "diagnostics" => {ubuntu, windows},
+  "sound_capture" => Tuple.new,
+  "shader" => all,
+  "shapes" => {ubuntu, windows},
+  "gl" => all,
+  "echo" => Tuple.new,
+} %>
+
+jobs:
+<% matrix.each_with_index(1) do |m, m_i| %>
+  job<%= m_i %>:
+    name: '<%= m[:os] %><%= " #{m[:os_ver]}" if m[:os_ver] %>: SFML <%= m[:sfml] %>, Crystal <%= m[:crystal] %>'
+  <% if m[:docker] %>
+    container: <%= m[:docker] %>
+    runs-on: ubuntu-latest
+  <% else %>
+    runs-on: <%= m[:os].downcase %>-<%= m[:os_ver] || "latest" %>
+  <% end %>
+    steps:
+      - name: Download CrSFML source
+        uses: actions/checkout@v3
+      - name: Install SFML
+        id: sfml
+        uses: oprypin/install-sfml@v1
+        with:
+          sfml: <%= m[:sfml_pkg] ? "package" : m[:sfml] %>
+  <% if m[:os] == mac && m[:crystal] == homebrew %>
+      - name: Install Crystal
+        run: brew install crystal
+  <% elsif !m[:docker] && m[:crystal] != homebrew %>
+      - name: Install Crystal
+        uses: oprypin/install-crystal@v1
+        with:
+          crystal: <%= m[:crystal] %>
+  <% end %>
+  <% if m[:os] == windows %>
+      - name: Enable Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@ed94116c4d30d2091601b81f339a2eaa1c2ba0a6
+  <% end %>
+  <% if m[:os] != windows %>
+      - name: Re-generate sources
+        run: crystal generate.cr "${{steps.sfml.outputs.path}}/include"
+  <% end %>
+      - name: Build CrSFML
+        run: \
+  <% if m[:os] == windows -%>
+          .\make
+  <% else -%>
+          SFML_INCLUDE_DIR="${{steps.sfml.outputs.path}}/include" \
+          make -j
+  <% end %>
+  <% if m[:sfml] == latest_sfml %>
+      - name: Validate freshness of generated files
+        run: git diff --exit-code
+  <% end %>
+      - name: Generate docs
+        run: crystal doc
+  <% if m[:os] == ubuntu %>
+      - name: Start virtual display
+        run: |
+          Xvfb :99 -screen 0 1024x768x24 +extension GLX &
+          echo DISPLAY=:99.0 >>$GITHUB_ENV
+  <% end %>
+      - name: Run tests
+        run: crystal spec
+  <% examples.each_key do |example| %>
+      - name: Build example "<%= example %>"
+        working-directory: ./examples
+        run: crystal build <%= example %>.cr
+  <% end %>
+  <% if m[:sfml].in?(latest_sfml, homebrew) %>
+    <% examples.each do |example, run| %>
+      <% if run.includes?(m[:os]) %>
+      - name: Run example "<%= example %>"
+        working-directory: ./examples
+        run: |
+        <% if m[:os] == windows %>
+          $proc = start <%= example %>.exe -NoNewWindow -PassThru
+          sleep 3
+          Get-Process -Id $proc.Id
+          kill $proc
+        <% else %>
+          ./<%= example %> & pid=$!
+          sleep 3
+          kill $pid
+        <% end %>
+      <% end %>
+    <% end %>
+    <% if m[:os] == ubuntu %>
+      - name: Stop virtual display
+        run: killall Xvfb
+        if: always()
+    <% end %>
+  <% end %>
+<% end %>
