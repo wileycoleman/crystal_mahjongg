@@ -22,6 +22,8 @@ Tiles "match" if they are identical or if they are in one of the two unique grou
 ### Icons
 Icons are mostly self explanatory but here is a simple reference.
 
+You change the board number! Just use the backspace key and numeric keys then hit the icon start a new game.
+
 ![alt text](src/support/icons/bold_reload.png) New Game using Board Number in the white box
 
 
