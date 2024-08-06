@@ -12,3 +12,7 @@ dependencies:
 crystal: '>= 1.11.2'
 
 license: MIT
+
+targets:
+  crystal_mahjongg:
+    main: src/crystal_mahjongg.cr

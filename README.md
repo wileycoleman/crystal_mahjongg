@@ -62,3 +62,4 @@ http://strassman.epizy.com/
 ## Contributors
 
 - [Cynthia Coleman](https://github.com/wileycoleman) - creator and maintainer
+- [Matthew J. Black][https://github.com/mjblack] - contributor
