@@ -38,7 +38,7 @@ class SettingsView
     scale = calculate_scale()
     @window.clear(@background_color)
     draw_settings_buttons(scale)
-    draw_tiles()
+    draw_tiles(scale)
     @window.display
   end
 
@@ -96,17 +96,19 @@ class SettingsView
     end
   end
 
-  def draw_tiles
+  def draw_tiles(scale)
     sprites = [] of SF::Sprite
     # create sprites in position order and add to sprites array
     (0..41).each do | indx |
       sprite = SF::Sprite.new(@texture)
+      sprite.set_scale(scale,scale)
+    
       sprite.texture_rect = @images_creator.images[indx]
-      width =  sprite.texture_rect.width
-      height = sprite.texture_rect.height
-      xcol = indx % 11
+      width =  sprite.global_bounds.width
+      height = sprite.global_bounds.height
+      xcol = indx % 7
       col = width * xcol + xcol * 10
-      yrow = (indx/ 11).floor
+      yrow = (indx/ 7).floor
       row = height * yrow + yrow * 10
       sprite.position = SF.vector2(col + @block_width, row + @block_height)
       sprites << sprite
