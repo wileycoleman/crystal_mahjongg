@@ -80,7 +80,6 @@ class MahjonggView
      scale_x = @block_width / @images_creator.tile_face_width
      scale_y = @block_height / @images_creator.tile_face_height
      scale = scale_x < scale_y ? scale_x : scale_y
-     puts scale
      return scale
   end
 
@@ -93,8 +92,8 @@ class MahjonggView
       tile = @tiles[tile_number]
       sprite = @sprites[indx]
       sprite.set_scale(@scale,@scale)
-      x = (pos.column/2 * @images_creator.tile_face_width * @scale) + @block_width + (@images_creator.x_offset * pos.layer)
-      y = ((pos.row/2 + 1) * @images_creator.tile_face_height * @scale) + @block_height/2 - (@images_creator.y_offset * (pos.layer))
+      x = (pos.column/2 * @images_creator.tile_face_width * @scale) + @block_width + (@images_creator.x_offset * pos.layer * @scale)
+      y = ((pos.row/2 + 1) * @images_creator.tile_face_height * @scale) + @block_height/2 - (@images_creator.y_offset * pos.layer * @scale)
       sprite.position = SF.vector2(x, y)
       sprite.color = tile.selected? ? SF.color(253, 253, 150) : SF.color(255, 255, 255)
       if @hint
