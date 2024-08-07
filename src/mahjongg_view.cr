@@ -8,7 +8,7 @@ class MahjonggView
 
   @positions : Array(Position)
   @sprites : Array(SF::Sprite)
-
+  @scale : Float64
   getter game_number : Int32
   @hint = false
   
@@ -21,10 +21,9 @@ class MahjonggView
     @tiles = @model.tiles
     @texture = InternalFiles.file_texture("muted_ivories.png")
     @images_creator = ImagesCreator.new(@texture)
-    
+    @scale = 1
     @block_width = @window.size.x / 16
     @block_height = @window.size.y / 10
-
     @sprites = create_sprites()
 
     @settings_button =  SF::Sprite.new(InternalFiles.file_texture("settings.png"))
@@ -33,8 +32,8 @@ class MahjonggView
     @bulb_button =  SF::Sprite.new(InternalFiles.file_texture("bulb_off.png"))
     @font = SF::Font.from_stream(InternalFiles.file_stream("LeagueSpartan-Regular.ttf"))
     @game_info_text = SF::Text.new("Game Info: ",@font)
-    @board_number_text = SF::Text.new("Board Number: ", @font)
-    @rectangle = SF::RectangleShape.new(SF.vector2(@images_creator.tile_face_width, 50))
+    @board_number_text = SF::Text.new(" Game Number: ", @font)
+    @rectangle = SF::RectangleShape.new(SF.vector2(@block_width * 1.8, 40 * @scale))
     @inputted = SF::Text.new(@game_number.to_s, @font)
 
     draw_board(@game_number.to_s)
@@ -55,7 +54,7 @@ class MahjonggView
   end
 
   def style_text(text : SF::Text)
-    text.character_size = 30
+    text.character_size = (32 * @scale).to_i
     text.style = SF::Text::Bold
     text.color = SF::Color::Black
   end
@@ -81,19 +80,22 @@ class MahjonggView
      scale_x = @block_width / @images_creator.tile_face_width
      scale_y = @block_height / @images_creator.tile_face_height
      scale = scale_x < scale_y ? scale_x : scale_y
+     puts scale
      return scale
   end
 
   def draw_board(game_number : String)
-    scale = calculate_scale()
+    @scale = calculate_scale()
     @window.clear(@background_color)
 
     @positions.each_with_index do | pos, indx | # index is position number
       tile_number = @model.position_to_tile_map[indx]
       tile = @tiles[tile_number]
       sprite = @sprites[indx]
-      sprite.set_scale(scale, scale)
-      sprite.position = SF.vector2((pos.column/2 * @images_creator.tile_face_width * scale) + @block_width + (@images_creator.x_offset * pos.layer), ((pos.row/2 + 1) * @images_creator.tile_face_height * scale) + @block_height/2 - (@images_creator.y_offset * (pos.layer)))
+      sprite.set_scale(@scale,@scale)
+      x = (pos.column/2 * @images_creator.tile_face_width * @scale) + @block_width + (@images_creator.x_offset * pos.layer)
+      y = ((pos.row/2 + 1) * @images_creator.tile_face_height * @scale) + @block_height/2 - (@images_creator.y_offset * (pos.layer))
+      sprite.position = SF.vector2(x, y)
       sprite.color = tile.selected? ? SF.color(253, 253, 150) : SF.color(255, 255, 255)
       if @hint
         if @model.possible_matches.size > 0 && @model.possible_matches[0].includes?(tile)
@@ -101,24 +103,23 @@ class MahjonggView
         end
       end
       sprite.color = SF::Color::Transparent if !tile.visible?  #turns invisible
-      
       @window.draw(sprite)
     end
-    draw_game_buttons(scale)
-    draw_input(game_number, scale)
+    draw_game_buttons()
+    draw_input(game_number)
     draw_info()
     @window.display
   end
 
 
-  def draw_game_buttons(scale)
-    draw_button(@reload_button, scale, @block_width * 3, 10)
+  def draw_game_buttons()
+    draw_button(@reload_button, @scale, @block_width * 4.5, 10)
     # only show settings icon and allow settings changes if on Linux
-    {% if flag?(:unix) %}
-      draw_button(@settings_button, scale, @window.size.x - @images_creator.tile_face_width, 10)
+    {% if flag?(:linux) %}
+      draw_button(@settings_button, @scale, @window.size.x - @block_width, 10)
     {% end %}
-    draw_button(@undo_button, scale,@block_width * 7, 10)
-    draw_button(@bulb_button, scale * 1.5, @block_width * 8, 10)
+    draw_button(@undo_button, @scale, @block_width * 7, 10)
+    draw_button(@bulb_button, @scale * 1.5, @block_width * 8, 10)
   end
 
   def draw_button(button, scale, x, y)
@@ -129,28 +130,30 @@ class MahjonggView
 
 
 
-  def draw_input(new_number_string : String, scale)
+  def draw_input(new_number_string : String)
     style_text(@board_number_text)
     @board_number_text.position = SF.vector2(0, 5)
     @window.draw(@board_number_text)
 
     @rectangle.fill_color = SF::Color::White
-    @rectangle.position = SF.vector2(@images_creator.tile_face_width * 2.5, 10)
+    @rectangle.size = SF.vector2f(@block_width * 1.8, 40 * @scale)
+
+    @rectangle.position = SF.vector2(@block_width * 2.5, 10)
     @window.draw(@rectangle)
 
     if @inputted.string != new_number_string
       # need to create font and inputted again or this crashes
       @font = SF::Font.from_stream(InternalFiles.file_stream("LeagueSpartan-Regular.ttf"))
-      @inputted = SF::Text.new(new_number_string, @font)
+       @inputted = SF::Text.new(new_number_string, @font)
     end
     style_text(@inputted)
-    @inputted.position = SF.vector2(@images_creator.tile_face_width * 2.5, 10)
+    @inputted.position = SF.vector2(@block_width * 2.5, 10)
     @window.draw(@inputted)
   end
 
   def draw_info
     style_text(@game_info_text)
-    @game_info_text.character_size = 50
+    @game_info_text.character_size = (50 * @scale).to_i
     @game_info_text.string = ""
     @game_info_text.position = SF.vector2(0, 60)
     if @model.possible_matches.size == 0
@@ -158,7 +161,7 @@ class MahjonggView
       @game_info_text.color = SF::Color::Red
     end
     if @model.matches.size == 72
-      @game_info_text.character_size = 100
+      @game_info_text.character_size = (100 * @scale).to_i
       @game_info_text.string = "  YOU WON!" 
       @game_info_text.color = SF::Color::Yellow
     end
@@ -168,7 +171,7 @@ class MahjonggView
   # provide the global coordinates and this returns position number
   def find_sprite_position(x, y)
     sprites_count = @sprites.size
-    # reverse order needed because of overlapping of tiles
+    # reverse order needed because of overlapping of tiles"fi
     # last drawn is the visible one that is being clicked
     @sprites.reverse.each_with_index do | sprite, indx |
       if sprite.global_bounds.contains?(x, y)

@@ -11,8 +11,13 @@ class Main
   def initialize(show = true)
     desktop = SF::VideoMode.desktop_mode
     width = (desktop.width * 0.7).to_i
-    height = (width * 0.8).to_i
-
+    aspect_height = (width * 0.8).to_i
+    puts aspect_height
+    max_height =  (desktop.height * 0.9).to_i
+    puts max_height
+    height = aspect_height < max_height ? aspect_height : max_height
+    puts "width #{width},height #{height}"
+  # test for 1728 vs 1118
     @main_window = SF::RenderWindow.new(
       SF::VideoMode.new(width, height, desktop.bits_per_pixel), "Crystal Mahjongg",
     ) if show
